@@ -29,7 +29,38 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  
+  
+  num_train = X.shape[0]
+  num_classes = W.shape[1]
+  
+  for i in range(num_train):
+
+    fun_i = X[i].dot(W)
+    fun_i -= np.max(fun_i)
+
+    sum_prob = np.sum(np.exp(fun_i))
+    
+    
+    #calculate all the prob for whole labels
+    prob = np.exp(fun_i)/sum_prob
+    
+    #the psrob of the real label
+    loss += -np.log(prob[y[i]])
+
+    for j in range(num_classes):
+      #get all dw values for each label j
+      #-ve if same label and prob ---> cost decrease
+      dW[:, j] += (prob[j] - (j == y[i])) * X[i]
+
+  #avg
+  loss = loss/num_train
+  dW = dW/num_train
+  #regularization
+  loss = loss + 0.5 * reg * np.sum(W * W)
+  dW = dW + reg*W
+    
+  
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
@@ -53,7 +84,26 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  # vectorizatin
+  num_train = X.shape[0]
+  fun = X.dot(W)
+  fun -= np.max(fun, axis=1, keepdims=True)
+  sum_prob = np.sum(np.exp(fun), axis=1, keepdims=True)
+  prob = np.exp(fun)/sum_prob
+
+  loss_vec = -np.log(prob[np.arange(num_train), y])
+  loss = np.sum(loss_vec)
+  if_label = np.zeros(prob.shape)
+  if_label[np.arange(num_train), y] = 1 # =1 only for the class == real label
+  dW = np.transpose(X).dot(prob - if_label)
+  
+  #avg
+  loss = loss/num_train
+  dW = dW/num_train
+  #regularization
+  loss = loss + 0.5 * reg * np.sum(W * W)
+  dW = dW + reg*W
+  
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
